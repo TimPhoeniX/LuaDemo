@@ -10,7 +10,7 @@ namespace SGE
 {
 	class Object;
 }
-class RavenBot;
+class DemoBot;
 
 enum class Deceleration:char
 {
@@ -23,10 +23,10 @@ class SteeringBehaviours
 {
 protected:
 	std::array<b2Vec2, 3> feelers = {b2Vec2_zero, b2Vec2_zero, b2Vec2_zero};
-	RavenBot* owner = nullptr;
-	const RavenBot* enemy = nullptr;
+	DemoBot* owner = nullptr;
+	const DemoBot* enemy = nullptr;
 	const SGE::Object* obstacle = nullptr;
-	std::vector<RavenBot*> neighbours;
+	std::vector<DemoBot*> neighbours;
 	b2Vec2 wTarget = b2Vec2_zero;
 	Path path;
 	float wRadius = 2.5f;
@@ -41,24 +41,24 @@ protected:
 	static b2Vec2 GetHidingSpot(const b2Vec2& obPos, float obRadius, b2Vec2 targetPos);
 
 public:
-	SteeringBehaviours(RavenBot* owner);
+	SteeringBehaviours(DemoBot* owner);
 	virtual ~SteeringBehaviours();
 	virtual b2Vec2 CalculateForce();
 	b2Vec2 Seek(b2Vec2 target) const;
 	b2Vec2 Flee(b2Vec2 target) const;
 	b2Vec2 Arrive(b2Vec2 target, Deceleration dec) const;
-	b2Vec2 Pursuit(const RavenBot* evader) const;
-	b2Vec2 Evade(const RavenBot* pursuer) const;
+	b2Vec2 Pursuit(const DemoBot* evader) const;
+	b2Vec2 Evade(const DemoBot* pursuer) const;
 	b2Vec2 Wander();
 	b2Vec2 ObstacleAvoidance();
 	b2Vec2 WallAvoidance();
-	b2Vec2 Interpose(const RavenBot*const aA, const RavenBot*const aB) const;
-	b2Vec2 Hide(const RavenBot*const target, bool runaway = false,const SGE::Object** = nullptr) const;
+	b2Vec2 Interpose(const DemoBot*const aA, const DemoBot*const aB) const;
+	b2Vec2 Hide(const DemoBot*const target, bool runaway = false,const SGE::Object** = nullptr) const;
 	b2Vec2 FollowPath();
-	b2Vec2 OffsetPursuit(const RavenBot*const leader, b2Vec2 offset) const;
-	b2Vec2 Separation(const std::vector<RavenBot*>& neighbours) const;
-	b2Vec2 Alignment(const std::vector<RavenBot*>& neighbours) const;
-	b2Vec2 Cohesion(const std::vector<RavenBot*>& neighbours) const;
+	b2Vec2 OffsetPursuit(const DemoBot*const leader, b2Vec2 offset) const;
+	b2Vec2 Separation(const std::vector<DemoBot*>& neighbours) const;
+	b2Vec2 Alignment(const std::vector<DemoBot*>& neighbours) const;
+	b2Vec2 Cohesion(const std::vector<DemoBot*>& neighbours) const;
 
 	void NewPath(Path&& path)
 	{
@@ -75,17 +75,17 @@ public:
 		this->path.Clear();
 	}
 
-	void setEnemy(const RavenBot* const enemy)
+	void setEnemy(const DemoBot* const enemy)
 	{
 		this->enemy = enemy;
 	}
 
-	const RavenBot* getEnemy() const
+	const DemoBot* getEnemy() const
 	{
 		return this->enemy;
 	}
 
-	std::vector<RavenBot*>& getNeighbours()
+	std::vector<DemoBot*>& getNeighbours()
 	{
 		return this->neighbours;
 	}
@@ -96,11 +96,11 @@ public:
 	}
 };
 
-class RavenSteering: public SteeringBehaviours
+class DemoSteering: public SteeringBehaviours
 {
 public:
 	using SteeringBehaviours::SteeringBehaviours;
-	virtual ~RavenSteering() override = default;
+	virtual ~DemoSteering() override = default;
 	virtual b2Vec2 CalculateForce() override;
 
 };

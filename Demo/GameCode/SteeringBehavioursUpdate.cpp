@@ -1,15 +1,15 @@
 #include "SteeringBehavioursUpdate.hpp"
 #include "Utils/Timing/sge_fps_limiter.hpp"
 #include "Box2D/Common/b2Math.h"
-#include "RavenBot.hpp"
+#include "DemoBot.hpp"
 #include "World.hpp"
 
-SteeringBehavioursUpdate::SteeringBehavioursUpdate(std::vector<RavenBot>* objects): Logic(SGE::LogicPriority::Highest), objects(objects)
+SteeringBehavioursUpdate::SteeringBehavioursUpdate(std::vector<DemoBot>* objects): Logic(SGE::LogicPriority::Highest), objects(objects)
 {}
 
 void SteeringBehavioursUpdate::performLogic()
 {
-	for(RavenBot& o : *this->objects)
+	for(DemoBot& o : *this->objects)
 	{
 		b2Vec2 heading = o.getVelocity();
 		heading.Normalize();

@@ -2,7 +2,7 @@
 #include <Logic/sge_logic.hpp>
 #include "IO/Key/sge_key.hpp"
 
-class RavenBot;
+class DemoBot;
 
 class PlayerMove: public SGE::Logic
 {
@@ -11,8 +11,8 @@ class PlayerMove: public SGE::Logic
 	const SGE::Key down;
 	const SGE::Key left;
 	const SGE::Key right;
-	RavenBot* object = nullptr;
+	DemoBot* object = nullptr;
 public:
-	PlayerMove(RavenBot* object, const float speed, const SGE::Key up, const SGE::Key down, const SGE::Key left, const SGE::Key right);
+	PlayerMove(DemoBot* object, const float speed, const SGE::Key up, const SGE::Key down, const SGE::Key left, const SGE::Key right);
 	void performLogic() override;
 };

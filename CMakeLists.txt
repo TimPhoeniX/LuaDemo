@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.7)
-project(Raven)
+project(LuaDemo)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeModules")
 
@@ -58,7 +58,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH ON)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 message(STATUS "BUILD TYPE: ${CMAKE_BUILD_TYPE}")
 
@@ -106,8 +106,10 @@ else()
 	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2")
 	set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} /O2")
 
-	set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Raven)
+	set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT LuaDemo)
 	link_directories("${CMAKE_CURRENT_BINARY_DIR}/lib")
+	file(GLOB AdditionalFiles ${CMAKE_SOURCE_DIR}/bin/*.*)
+	file(COPY ${AdditionalFiles} DESTINATION ${CMAKE_BINARY_DIR}/bin)
 endif()
 
 message(STATUS "Using PACKAGE_MANAGER: ${PACKAGE_MANAGER}")
@@ -158,6 +160,13 @@ else()
 	add_definitions(${OpenGL_DEFINITIONS})
 endif()
 
+find_package(lua REQUIRED)
+if(NOT LUA_FOUND)
+        message(Error "lua not found")
+else()
+	include_directories(${lua_INCLUDE_DIR})
+endif()
+
 include(CMakeModules/sge_status.cmake)
 
 set(SGE_DIR "SGE/SimpleGameEngine")
@@ -185,4 +194,4 @@ else()
 	endif()
 endif()
 
-add_subdirectory(Raven)
+add_subdirectory(Demo)

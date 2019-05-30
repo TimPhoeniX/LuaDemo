@@ -1,5 +1,5 @@
 #include "SteeringBehaviours.hpp"
-#include "RavenBot.hpp"
+#include "DemoBot.hpp"
 #include <random>
 #include <functional>
 #include <vector>
@@ -8,7 +8,7 @@
 #include "Wall.hpp"
 #include "Utils/Timing/sge_fps_limiter.hpp"
 
-SteeringBehaviours::SteeringBehaviours(RavenBot* owner): owner(owner)
+SteeringBehaviours::SteeringBehaviours(DemoBot* owner): owner(owner)
 {
 	this->neighbours.reserve(5u);
 }
@@ -114,7 +114,7 @@ b2Vec2 SteeringBehaviours::Arrive(b2Vec2 target, Deceleration dec) const
 	return b2Vec2_zero;
 }
 
-b2Vec2 SteeringBehaviours::Pursuit(const RavenBot* const evader) const
+b2Vec2 SteeringBehaviours::Pursuit(const DemoBot* const evader) const
 {
 	b2Vec2 toEvader = evader->getPosition() - owner->getPosition();
 	float relHead = b2Dot(owner->getHeading(), evader->getHeading());
@@ -126,7 +126,7 @@ b2Vec2 SteeringBehaviours::Pursuit(const RavenBot* const evader) const
 	return this->Seek(evader->getPosition() + lookAhead * evader->getVelocity());
 }
 
-b2Vec2 SteeringBehaviours::Evade(const RavenBot* const pursuer) const
+b2Vec2 SteeringBehaviours::Evade(const DemoBot* const pursuer) const
 {
 	b2Vec2 toPursuer = pursuer->getPosition() - owner->getPosition();
 	float lookAhead = toPursuer.Length() / (owner->getMaxSpeed() + pursuer->getSpeed());
@@ -274,7 +274,7 @@ b2Vec2 SteeringBehaviours::WallAvoidance()
 	return WallAvoidanceImp(walls);
 }
 
-b2Vec2 SteeringBehaviours::Interpose(const RavenBot* const aA, const RavenBot* const aB) const
+b2Vec2 SteeringBehaviours::Interpose(const DemoBot* const aA, const DemoBot* const aB) const
 {
 	b2Vec2 midPoint = 0.5*(aA->getPosition() + aB->getPosition());
 	float eta = b2Distance(owner->getPosition(), midPoint) / owner->getMaxSpeed();
@@ -293,7 +293,7 @@ b2Vec2 SteeringBehaviours::GetHidingSpot(const b2Vec2& obPos, float obRadius, b2
 	return distAway * toOb + obPos;
 }
 
-b2Vec2 SteeringBehaviours::Hide(const RavenBot* const target, bool runaway, const SGE::Object** object) const
+b2Vec2 SteeringBehaviours::Hide(const DemoBot* const target, bool runaway, const SGE::Object** object) const
 {
 	float closestDist = !runaway ? std::numeric_limits<float>::max() : 0.f;
 	b2Vec2 bestSpot = b2Vec2_zero;
@@ -341,7 +341,7 @@ b2Vec2 SteeringBehaviours::FollowPath()
 	}
 }
 
-b2Vec2 SteeringBehaviours::OffsetPursuit(const RavenBot* const leader, b2Vec2 offset) const
+b2Vec2 SteeringBehaviours::OffsetPursuit(const DemoBot* const leader, b2Vec2 offset) const
 {
 	b2Vec2 worldOffset = PointToWorldSpace(offset, leader->getHeading(), leader->getPosition());
 	b2Vec2 toOffset = worldOffset - owner->getPosition();
@@ -349,10 +349,10 @@ b2Vec2 SteeringBehaviours::OffsetPursuit(const RavenBot* const leader, b2Vec2 of
 	return Arrive(worldOffset + lookAhead * leader->getVelocity(), Deceleration::fast);
 }
 
-b2Vec2 SteeringBehaviours::Separation(const std::vector<RavenBot*>& neighbours) const
+b2Vec2 SteeringBehaviours::Separation(const std::vector<DemoBot*>& neighbours) const
 {
 	b2Vec2 sForce = b2Vec2_zero;
-	for(RavenBot* neighbour : neighbours)
+	for(DemoBot* neighbour : neighbours)
 	{
 		b2Vec2 toAgent = owner->getPosition() - neighbour->getPosition();
 		float len = toAgent.Normalize();
@@ -361,10 +361,10 @@ b2Vec2 SteeringBehaviours::Separation(const std::vector<RavenBot*>& neighbours) 
 	return sForce;
 }
 
-b2Vec2 SteeringBehaviours::Alignment(const std::vector<RavenBot*>& neighbours) const
+b2Vec2 SteeringBehaviours::Alignment(const std::vector<DemoBot*>& neighbours) const
 {
 	b2Vec2 avgHeading = b2Vec2_zero;
-	for(RavenBot* neighbour : neighbours)
+	for(DemoBot* neighbour : neighbours)
 	{
 		avgHeading += neighbour->getHeading();
 	}
@@ -376,10 +376,10 @@ b2Vec2 SteeringBehaviours::Alignment(const std::vector<RavenBot*>& neighbours) c
 	return avgHeading;
 }
 
-b2Vec2 SteeringBehaviours::Cohesion(const std::vector<RavenBot*>& neighbours) const
+b2Vec2 SteeringBehaviours::Cohesion(const std::vector<DemoBot*>& neighbours) const
 {
 	b2Vec2 massCenter = b2Vec2_zero, sForce = b2Vec2_zero;
-	for(RavenBot* neighbour : neighbours)
+	for(DemoBot* neighbour : neighbours)
 	{
 		massCenter += neighbour->getPosition();
 	}
@@ -391,7 +391,7 @@ b2Vec2 SteeringBehaviours::Cohesion(const std::vector<RavenBot*>& neighbours) co
 	return sForce;
 }
 
-b2Vec2 RavenSteering::CalculateForce()
+b2Vec2 DemoSteering::CalculateForce()
 {
 	b2Vec2 sForce = b2Vec2_zero;
 	sForce += 0.5f * this->WallAvoidance();

@@ -9,8 +9,8 @@ set(GAME_SOURCE_FILES main.cpp
 		GameCode/IntroScene.hpp
 		GameCode/Logics.cpp
 		GameCode/Logics.hpp
-		GameCode/RavenBot.cpp
-		GameCode/RavenBot.hpp
+		GameCode/DemoBot.cpp
+		GameCode/DemoBot.hpp
 		GameCode/Objects.cpp
 		GameCode/Objects.hpp
 		GameCode/Path.hpp
@@ -20,8 +20,8 @@ set(GAME_SOURCE_FILES main.cpp
 		GameCode/QuadBatch.hpp
 		GameCode/QuadObject.cpp
 		GameCode/QuadObject.hpp
-		GameCode/RavenScene.cpp
-		GameCode/RavenScene.hpp
+		GameCode/DemoScene.cpp
+		GameCode/DemoScene.hpp
 		GameCode/SteeringBehaviours.cpp
 		GameCode/SteeringBehaviours.hpp
 		GameCode/SteeringBehavioursUpdate.cpp
@@ -32,6 +32,7 @@ set(GAME_SOURCE_FILES main.cpp
 		GameCode/World.hpp)
 
 add_executable(${PROJECT_NAME} ${GAME_SOURCE_FILES})
+include_directories(Lua)
 
 if (NOT INCLUDE_ENGINE_PROJECT)
 	target_link_libraries(${PROJECT_NAME}
@@ -49,6 +50,7 @@ else()
 		${GLEW_LIBRARIES}
 		${OPENGL_LIBRARIES}
 		${GLM_LIBRARIES}
+		${LUA_LIBRARIES}
 		SDL2::SDL2-static
 		SDL2::SDL2main
 
@@ -78,6 +80,8 @@ else()
 		version
 		uuid)
 endif()
+
+
 
 if (INCLUDE_ENGINE_PROJECT)
 	get_filename_component(SGE_RELATIVE_PARENT ${CMAKE_CURRENT_SOURCE_DIR} PATH)

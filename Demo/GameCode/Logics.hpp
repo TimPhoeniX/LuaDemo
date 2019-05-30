@@ -9,7 +9,7 @@
 #include <vector>
 #include <random>
 
-#include "RavenBot.hpp"
+#include "DemoBot.hpp"
 #include "Objects.hpp"
 #include "World.hpp"
 
@@ -17,8 +17,8 @@ namespace SGE
 {
 	class WorldElement;
 }
-class RavenGameState;
-class RavenBot;
+class DemoGameState;
+class DemoBot;
 class Player;
 class World;
 
@@ -32,7 +32,7 @@ class MoveAwayFromObstacle : public SGE::Logic
 protected:
 	World* world;
 	std::vector<SGE::Object*> obstacles;
-	std::vector<RavenBot*> movers;
+	std::vector<DemoBot*> movers;
 public:
 	MoveAwayFromObstacle(World* const world, const std::vector<SGE::Object*>& obstacles);
 
@@ -43,11 +43,11 @@ class SeparateBots : public SGE::Logic
 {
 protected:
 	World* world;
-	std::vector<RavenBot>* movers;
-	std::vector<RavenBot*> colliding;
+	std::vector<DemoBot>* movers;
+	std::vector<DemoBot*> colliding;
 public:
 
-	SeparateBots(World* const world, std::vector<RavenBot>* const movers);
+	SeparateBots(World* const world, std::vector<DemoBot>* const movers);
 
 	void performLogic() override;
 };
@@ -56,14 +56,14 @@ class MoveAwayFromWall : public SGE::Logic
 {
 protected:
 	World* world;
-	std::vector<RavenBot>& movers;
+	std::vector<DemoBot>& movers;
 public:
 
-	MoveAwayFromWall(World* const world, std::vector<RavenBot>& movers)
+	MoveAwayFromWall(World* const world, std::vector<DemoBot>& movers)
 		: Logic(SGE::LogicPriority::Highest), world(world), movers(movers)
 	{}
 
-	void CollideWithWall(RavenBot& mo) const;
+	void CollideWithWall(DemoBot& mo) const;
 	void performLogic() override;
 };
 
@@ -107,37 +107,37 @@ namespace SGE
 class RocketLogic: public SGE::Logic
 {
 protected:
-	RavenGameState* gs;
+	DemoGameState* gs;
 	World* world;
 public:
-	RocketLogic(RavenGameState* gs, World* w);
+	RocketLogic(DemoGameState* gs, World* w);
 
 	void performLogic() override;
 };
 
-class RavenGameState;
+class DemoGameState;
 
 class BotLogic: public SGE::Logic
 {
 protected:
 	World* world;
-	RavenGameState* gs;
+	DemoGameState* gs;
 
-	void updateEnemies(RavenBot& bot);
-	void updateItems(RavenBot& bot);
-	void updateState(RavenBot& bot);
-	void pickItems(RavenBot& bot);
-	void ResetBot(RavenBot& bot);
-	void updateBotState(RavenBot& bot);
-	void FireRG(RavenBot& bot);
-	void FireRL(RavenBot& bot);
-	void UpdateEnemy(RavenBot& bot);
-	void GetItem(RavenBot& bot, Item::IType type);
-	void updateBot(RavenBot& bot);
+	void updateEnemies(DemoBot& bot);
+	void updateItems(DemoBot& bot);
+	void updateState(DemoBot& bot);
+	void pickItems(DemoBot& bot);
+	void ResetBot(DemoBot& bot);
+	void updateBotState(DemoBot& bot);
+	void FireRG(DemoBot& bot);
+	void FireRL(DemoBot& bot);
+	void UpdateEnemy(DemoBot& bot);
+	void GetItem(DemoBot& bot, Item::IType type);
+	void updateBot(DemoBot& bot);
 	
 	std::function<float(void)> randAngle;
 public:
-	BotLogic(World* world, RavenGameState* gs)
+	BotLogic(World* world, DemoGameState* gs)
 		: Logic(SGE::LogicPriority::Highest), world(world), gs(gs)
 	{
 		constexpr float spread = 0.01f;
@@ -151,9 +151,9 @@ class ItemLogic: public SGE::Logic
 {
 protected:
 	World* world;
-	RavenGameState* gs;
+	DemoGameState* gs;
 public:
-	ItemLogic(World* world, RavenGameState* gs)
+	ItemLogic(World* world, DemoGameState* gs)
 		: Logic(SGE::LogicPriority::High), world(world), gs(gs){}
 	
 	void performLogic() override;

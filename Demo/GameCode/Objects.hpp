@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include <Object/sge_object.hpp>
-#include "RavenBot.hpp"
+#include "DemoBot.hpp"
 #include "Utilities.hpp"
 
 class Rocket: public SGE::Object
@@ -86,13 +86,13 @@ public:
 	};
 protected:
 	constexpr static float itemCD = 15.f;
-	virtual void consumeItem(RavenBot&) = 0;
+	virtual void consumeItem(DemoBot&) = 0;
 	IType type;
 	float cd = itemCD;
 
 	Item(b2Vec2 pos, IType type);
 public:
-	void useItem(RavenBot&);
+	void useItem(DemoBot&);
 
 
 	IType Type() const
@@ -120,7 +120,7 @@ public:
 class HealthPack: public Item
 {
 protected:
-	void consumeItem(RavenBot& bot) override;
+	void consumeItem(DemoBot& bot) override;
 public:
 	HealthPack();
 	explicit HealthPack(b2Vec2 pos);
@@ -129,7 +129,7 @@ public:
 class ArmorPack: public Item
 {
 protected:
-	void consumeItem(RavenBot& bot) override;
+	void consumeItem(DemoBot& bot) override;
 public:
 	ArmorPack();
 	explicit ArmorPack(b2Vec2 pos);
@@ -139,7 +139,7 @@ public:
 class RailgunAmmo: public Item
 {
 protected:
-	void consumeItem(RavenBot& bot) override;
+	void consumeItem(DemoBot& bot) override;
 public:
 	RailgunAmmo();
 	explicit RailgunAmmo(b2Vec2 pos);
@@ -148,7 +148,7 @@ public:
 class RocketAmmo: public Item
 {
 protected:
-	void consumeItem(RavenBot& bot) override;
+	void consumeItem(DemoBot& bot) override;
 public:
 	RocketAmmo();
 	explicit RocketAmmo(b2Vec2 pos);

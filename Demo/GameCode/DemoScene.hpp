@@ -1,9 +1,9 @@
-﻿#ifndef RAVEN_SCENE
-#define RAVEN_SCENE
+﻿#ifndef Demo_SCENE
+#define Demo_SCENE
 
 #include <Game/sge_game.hpp>
 #include <Scene/sge_scene.hpp>
-#include "RavenBot.hpp"
+#include "DemoBot.hpp"
 #include "World.hpp"
 #include "GridGraph.hpp"
 #include "Objects.hpp"
@@ -28,7 +28,7 @@ constexpr float Height = 60.f;
 constexpr size_t X = size_t(Width);
 constexpr size_t Y = size_t(Height);
 
-class RavenGameState
+class DemoGameState
 {
 protected:
 	std::function<size_t()> rand;
@@ -40,7 +40,7 @@ public:
 	SGE::RealSpriteBatch* rocketBatch;
 	SGE::RealSpriteBatch* explosionBatch;
 	std::vector<SGE::Object*> obstacles;
-	std::vector<RavenBot> bots;
+	std::vector<DemoBot> bots;
 	std::vector<Rocket*> rockets;
 	std::vector<Rocket*> explosions;
 	std::vector<Item*> items;
@@ -64,24 +64,24 @@ public:
 	void RemoveExplosion(Rocket* rocket);
 };
 
-class RavenScene : public SGE::Scene
+class DemoScene : public SGE::Scene
 {
 protected:
 	World world;
 	SGE::Game* game = nullptr;
 	std::string path;
-	RavenGameState* gs = nullptr;
+	DemoGameState* gs = nullptr;
 
 	static bool init();
 public:
 	SGE::Scene* endScene = nullptr;
 
-	RavenScene(SGE::Game* game, const char* path);
+	DemoScene(SGE::Game* game, const char* path);
 
 	virtual void loadScene() override;
 	virtual void unloadScene() override;
 
-	virtual ~RavenScene();
+	virtual ~DemoScene();
 
 	virtual void finalize() override;
 

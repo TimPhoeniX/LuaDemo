@@ -9,12 +9,12 @@ World::World(float width, float height)
 	walls.reserve(4);
 }
 
-std::vector<SGE::Object*> World::getObstacles(RavenBot* const mover, float radius)
+std::vector<SGE::Object*> World::getObstacles(DemoBot* const mover, float radius)
 {
 	return this->getObstacles(mover->getPosition(), radius);
 }
 
-std::vector<SGE::Object*> World::getObstacles(RavenBot* const mover)
+std::vector<SGE::Object*> World::getObstacles(DemoBot* const mover)
 {
 	return this->getObstacles(mover->getPosition(), 10.f);
 }
@@ -28,7 +28,7 @@ std::vector<SGE::Object*> World::getObstacles(b2Vec2 position, float radius)
 	return res;
 }
 
-std::vector<Item*> World::getItems(RavenBot* const mover)
+std::vector<Item*> World::getItems(DemoBot* const mover)
 {
 	auto its = std::move(this->items.CalculateNeighbours(mover->getPosition(), mover->getShape()->getRadius()));
 	return {its.begin(), its.end()};
@@ -40,18 +40,18 @@ std::vector<Rocket*> World::getRockets(const b2Vec2& position, float radius)
 	return {rc.begin(), rc.end()};
 }
 
-void World::getNeighbours(std::vector<RavenBot*>& res, RavenBot* const mover)
+void World::getNeighbours(std::vector<DemoBot*>& res, DemoBot* const mover)
 {
 	return this->getNeighbours(res, mover, 10.f);
 }
 
-void World::getNeighbours(std::vector<RavenBot*>& res, RavenBot* const mover, float radius)
+void World::getNeighbours(std::vector<DemoBot*>& res, DemoBot* const mover, float radius)
 {
 	this->getNeighbours(res, mover->getPosition(), radius);
 	res.erase(std::remove(res.begin(), res.end(), mover), res.end());
 }
 
-void World::getNeighbours(std::vector<RavenBot*>& res, b2Vec2 position, float radius)
+void World::getNeighbours(std::vector<DemoBot*>& res, b2Vec2 position, float radius)
 {
 	auto nb = std::move(this->movers.CalculateNeighbours(position, radius));
 	res.assign(nb.begin(), nb.end());
@@ -92,7 +92,7 @@ void World::RemoveRocket(Rocket* r)
 	this->rockets.RemoveEntity(r);
 }
 
-void World::AddMover(RavenBot* mo)
+void World::AddMover(DemoBot* mo)
 {
 	this->movers.AddEntity(mo);
 }
@@ -107,12 +107,12 @@ void World::UpdateRocket(Rocket* rocket, b2Vec2 oldPos)
 	this->rockets.UpdateEntity(rocket, oldPos);
 }
 
-void World::RemoveMover(RavenBot* mo)
+void World::RemoveMover(DemoBot* mo)
 {
 	this->movers.RemoveEntity(mo);
 }
 
-void World::UpdateMover(RavenBot* mo, b2Vec2 oldPos)
+void World::UpdateMover(DemoBot* mo, b2Vec2 oldPos)
 {
 	this->movers.UpdateEntity(mo, oldPos);
 }
@@ -153,12 +153,12 @@ void World::clear()
 	this->walls.clear();
 }
 
-RavenBot* World::RaycastBot(RavenBot* caster, b2Vec2 from, b2Vec2 direction, b2Vec2& hit) const
+DemoBot* World::RaycastBot(DemoBot* caster, b2Vec2 from, b2Vec2 direction, b2Vec2& hit) const
 {
 	for(size_t index : Ray(from, direction, this->width, this->height, this->cellWidth, this->cellHeight))
 	{
 		b2Vec2 moverHit, obstacleHit;
-		RavenBot* hitMover = this->getHit(from, direction, moverHit, this->movers.getEntities(index), caster);
+		DemoBot* hitMover = this->getHit(from, direction, moverHit, this->movers.getEntities(index), caster);
 		SGE::Object* hitObstacle = this->getHit(from, direction, obstacleHit, this->obstacles.getEntities(index));
 		if(hitMover && hitObstacle)
 		{

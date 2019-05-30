@@ -11,7 +11,7 @@
 #include <Game/Director/sge_director.hpp>
 #include <Renderer/SpriteBatch/sge_sprite_batch.hpp>
 
-#include "RavenScene.hpp"
+#include "DemoScene.hpp"
 #include "Utilities.hpp"
 #include "IntroScene.hpp"
 #include "Box2D/Dynamics/Contacts/b2ChainAndCircleContact.h"
@@ -34,7 +34,7 @@ void MoveAwayFromObstacle::performLogic()
 		{
 			this->movers.clear();
 			if(this->movers.empty()) continue;
-			for(RavenBot* mo : this->movers)
+			for(DemoBot* mo : this->movers)
 			{
 				SGE::Shape moShape = *mo->getShape();
 				b2Vec2 toMover = mo->getPosition() - w->getPosition();
@@ -53,7 +53,7 @@ void MoveAwayFromObstacle::performLogic()
 		{
 			for(auto& wall : reinterpret_cast<QuadObstacle*>(w)->getEdges())
 			{
-				for(RavenBot* mo : this->movers)
+				for(DemoBot* mo : this->movers)
 				{
 					float fradius = mo->getShape()->getRadius();
 					b2Vec2 pos = mo->getPosition();
@@ -82,7 +82,7 @@ void MoveAwayFromObstacle::performLogic()
 	}
 }
 
-SeparateBots::SeparateBots(World* const world, std::vector<RavenBot>* const movers): Logic(SGE::LogicPriority::Highest), world(world), movers(movers)
+SeparateBots::SeparateBots(World* const world, std::vector<DemoBot>* const movers): Logic(SGE::LogicPriority::Highest), world(world), movers(movers)
 {
 	colliding.reserve(10);
 }
@@ -93,14 +93,14 @@ void SeparateBots::performLogic()
 	b2Vec2 basePosition = b2Vec2_zero;
 	float otherRadius = 0.f;
 	b2Vec2 otherPosition = b2Vec2_zero;
-	for (RavenBot& mo : *this->movers)
+	for (DemoBot& mo : *this->movers)
 	{
 		baseRadius = mo.getShape()->getRadius();
 		basePosition = mo.getPosition();
 		this->colliding.clear();
 		this->world->getNeighbours(this->colliding, &mo, 2.f * baseRadius);
 		if (this->colliding.empty()) continue;
-		for (RavenBot* other : this->colliding)
+		for (DemoBot* other : this->colliding)
 		{
 			otherPosition = other->getPosition();
 			otherRadius = other->getShape()->getRadius();
@@ -117,7 +117,7 @@ void SeparateBots::performLogic()
 	}
 }
 
-void MoveAwayFromWall::CollideWithWall(RavenBot& mo) const
+void MoveAwayFromWall::CollideWithWall(DemoBot& mo) const
 {
 	for (std::pair<SGE::Object*, Edge>& wall: this->world->getWalls())
 	{
@@ -139,7 +139,7 @@ void MoveAwayFromWall::CollideWithWall(RavenBot& mo) const
 
 void MoveAwayFromWall::performLogic()
 {
-	for(RavenBot& mo: this->movers)
+	for(DemoBot& mo: this->movers)
 	{
 		CollideWithWall(mo);
 	}
@@ -189,7 +189,7 @@ void OnKey::performLogic()
 	}
 }
 
-RocketLogic::RocketLogic(RavenGameState* gs, World* w): Logic(SGE::LogicPriority::High), gs(gs), world(w)
+RocketLogic::RocketLogic(DemoGameState* gs, World* w): Logic(SGE::LogicPriority::High), gs(gs), world(w)
 {
 }
 
@@ -202,7 +202,7 @@ void RocketLogic::performLogic()
 		auto oldPos = rocket->getPosition();
 		rocket->setPosition(oldPos + SGE::delta_time * velocity);
 		this->world->UpdateRocket(rocket, oldPos);
-		std::vector<RavenBot*> bots;
+		std::vector<DemoBot*> bots;
 		constexpr float hitRadius = 0.5f * Rocket::Height();
 		b2Vec2 hitSpot = rocket->getPosition() + (hitRadius * rocket->Heading());
 		this->world->getNeighbours(bots, hitSpot, hitRadius);
@@ -287,11 +287,11 @@ void RocketLogic::performLogic()
 	while(!primed.empty())
 	{
 		Rocket* rocket = primed.top();
-		std::vector<RavenBot*> bots;
+		std::vector<DemoBot*> bots;
 		this->world->getNeighbours(bots, rocket->getPosition(), Rocket::Radius());
-		for(RavenBot* bot : bots)
+		for(DemoBot* bot : bots)
 		{
-			bot->Damage(RavenBot::LauncherDamage);
+			bot->Damage(DemoBot::LauncherDamage);
 		}
 		std::vector<Rocket*> rockets(this->world->getRockets(rocket->getPosition(), Rocket::Radius()));
 		for(Rocket* otherRocket : rockets)
@@ -320,7 +320,7 @@ void RocketLogic::performLogic()
 	}
 }
 
-void BotLogic::updateEnemies(RavenBot& bot)
+void BotLogic::updateEnemies(DemoBot& bot)
 {
 	for(auto& enemy : this->gs->bots)
 	{
@@ -331,7 +331,7 @@ void BotLogic::updateEnemies(RavenBot& bot)
 		hit.Normalize();
 		if(bot.enemies.find(&enemy) != bot.enemies.end())
 		{
-			RavenBot* hitBot = this->world->RaycastBot(&bot, botPos, hit, hit);
+			DemoBot* hitBot = this->world->RaycastBot(&bot, botPos, hit, hit);
 			if(!hitBot)
 			{
 				bot.enemies.erase(&enemy);
@@ -343,7 +343,7 @@ void BotLogic::updateEnemies(RavenBot& bot)
 		{
 			if (b2Abs(b2Atan2(b2Cross(bot.getHeading(), hit), b2Dot(bot.getHeading(), hit))) < 0.25f * b2_pi)
 			{
-				RavenBot* hitBot = this->world->RaycastBot(&bot, botPos, hit, hit);
+				DemoBot* hitBot = this->world->RaycastBot(&bot, botPos, hit, hit);
 				if(hitBot)
 				{
 					bot.enemies.insert(hitBot);
@@ -353,7 +353,7 @@ void BotLogic::updateEnemies(RavenBot& bot)
 	}
 }
 
-void BotLogic::updateItems(RavenBot& bot)
+void BotLogic::updateItems(DemoBot& bot)
 {
 	for(Item* item : this->gs->items)
 	{
@@ -374,7 +374,7 @@ void BotLogic::updateItems(RavenBot& bot)
 	}
 }
 
-void BotLogic::updateState(RavenBot& bot)
+void BotLogic::updateState(DemoBot& bot)
 {
 	switch (bot.getState())
 	{
@@ -481,7 +481,7 @@ void BotLogic::updateState(RavenBot& bot)
 	}
 }
 
-void BotLogic::pickItems(RavenBot& bot)
+void BotLogic::pickItems(DemoBot& bot)
 {
 	auto items = this->world->getItems(&bot);
 	for(Item* item : items)
@@ -491,7 +491,7 @@ void BotLogic::pickItems(RavenBot& bot)
 	}
 }
 
-void BotLogic::ResetBot(RavenBot& bot)
+void BotLogic::ResetBot(DemoBot& bot)
 {
 	b2Vec2 newPos = this->gs->GetRandomVertex(bot.getPosition(), 30.f, false)->Label().position;
 	bot.Respawn(newPos);
@@ -505,7 +505,7 @@ void BotLogic::ResetBot(RavenBot& bot)
 	}
 }
 
-void BotLogic::updateBotState(RavenBot& bot)
+void BotLogic::updateBotState(DemoBot& bot)
 {
 	if(bot.IsDead())
 	{
@@ -521,14 +521,14 @@ void BotLogic::updateBotState(RavenBot& bot)
 	bot.ClearHit();
 }
 
-void BotLogic::FireRG(RavenBot& bot)
+void BotLogic::FireRG(DemoBot& bot)
 {
 	if(!bot.FireRG()) return;
 	b2Vec2 pos = bot.getPosition();
 	b2Vec2 direction = bot.getHeading();
 	direction = b2Mul(b2Rot(this->randAngle()), direction);
 	b2Vec2 hitPos = b2Vec2_zero;
-	RavenBot* hitObject = this->world->RaycastBot(&bot, pos, direction, hitPos);
+	DemoBot* hitObject = this->world->RaycastBot(&bot, pos, direction, hitPos);
 	bot.RailgunTrace->setVisible(true);
 	b2Vec2 beam = hitPos - pos;
 	bot.RailgunTrace->setPosition(pos + 0.5f * beam);
@@ -537,11 +537,11 @@ void BotLogic::FireRG(RavenBot& bot)
 
 	if(hitObject)
 	{
-		hitObject->Damage(RavenBot::RailgunDamage);
+		hitObject->Damage(DemoBot::RailgunDamage);
 	}
 }
 
-void BotLogic::FireRL(RavenBot& bot)
+void BotLogic::FireRL(DemoBot& bot)
 {
 	if(!bot.FireRL()) return;
 	b2Vec2 pos = bot.getPosition();
@@ -550,11 +550,11 @@ void BotLogic::FireRL(RavenBot& bot)
 	this->gs->NewRocket(pos, direction);
 }
 
-void BotLogic::UpdateEnemy(RavenBot& bot)
+void BotLogic::UpdateEnemy(DemoBot& bot)
 {
 	float dist = std::numeric_limits<float>::max();
 	b2Vec2 pos = bot.getPosition();
-	RavenBot* target = nullptr;
+	DemoBot* target = nullptr;
 	for(auto enemy : bot.enemies)
 	{
 		float enemyDist = b2DistanceSquared(pos, enemy->getPosition());
@@ -570,7 +570,7 @@ void BotLogic::UpdateEnemy(RavenBot& bot)
 	}
 }
 
-void BotLogic::GetItem(RavenBot& bot, Item::IType type)
+void BotLogic::GetItem(DemoBot& bot, Item::IType type)
 {
 	b2Vec2 pos = bot.getPosition();
 	Item* closestItem = nullptr;
@@ -613,7 +613,7 @@ void BotLogic::GetItem(RavenBot& bot, Item::IType type)
 	}
 }
 
-void BotLogic::updateBot(RavenBot& bot)
+void BotLogic::updateBot(DemoBot& bot)
 {
 	this->updateBotState(bot);
 
@@ -635,7 +635,7 @@ void BotLogic::updateBot(RavenBot& bot)
 		{
 			UpdateEnemy(bot);
 		}
-		const RavenBot* enemy = bot.getSteering()->getEnemy();
+		const DemoBot* enemy = bot.getSteering()->getEnemy();
 		if(!enemy) break;
 		b2Vec2 direction = enemy->getPosition() - bot.getPosition();
 		float distance = direction.Normalize();
@@ -656,7 +656,7 @@ void BotLogic::updateBot(RavenBot& bot)
 		{
 			UpdateEnemy(bot);
 		}
-		const RavenBot* enemy = bot.getSteering()->getEnemy();
+		const DemoBot* enemy = bot.getSteering()->getEnemy();
 		if(!enemy || !bot.IsFollowingPath()) break;
 		GridVertex* begin = this->gs->GetVertex(bot.getPosition());
 		GridVertex* end = this->gs->GetRandomVertex(enemy->getPosition(),30.f,false);
@@ -691,7 +691,7 @@ void BotLogic::updateBot(RavenBot& bot)
 
 void BotLogic::performLogic()
 {
-	for(RavenBot& bot: this->gs->bots)
+	for(DemoBot& bot: this->gs->bots)
 	{
 		this->updateBot(bot);
 	}

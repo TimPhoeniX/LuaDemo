@@ -2,9 +2,9 @@
 #include <Utils/Timing/sge_fps_limiter.hpp>
 #include <Box2D/Common/b2Math.h>
 #include <IO/KeyboardState/sge_keyboard_state.hpp>
-#include "RavenBot.hpp"
+#include "DemoBot.hpp"
 
-PlayerMove::PlayerMove(RavenBot* object, const float speed, const SGE::Key up, const SGE::Key down, const SGE::Key left, const SGE::Key right)
+PlayerMove::PlayerMove(DemoBot* object, const float speed, const SGE::Key up, const SGE::Key down, const SGE::Key left, const SGE::Key right)
 	: Logic(SGE::LogicPriority::Highest), speed(speed), up(up), down(down), left(left), right(right), object(object)
 {}
 

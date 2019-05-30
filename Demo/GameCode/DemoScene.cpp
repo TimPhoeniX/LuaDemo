@@ -6,22 +6,27 @@
 #include <algorithm>
 #include <random>
 
-#include "RavenScene.hpp"
+#include "DemoScene.hpp"
 #include "Image.hpp"
 #include "Logics.hpp"
 #include "Actions.hpp"
-#include "RavenBot.hpp"
+#include "DemoBot.hpp"
 #include "Utilities.hpp"
 #include "SteeringBehavioursUpdate.hpp"
 #include "Game/InputHandler/sge_input_binder.hpp"
 #include "Renderer/SpriteBatch/sge_sprite_batch.hpp"
 #include "Renderer/sge_renderer.hpp"
-#include <allocators>
 #include "QuadBatch.hpp"
 #include "QuadObject.hpp"
 #include <queue>
 #include "Graph.hpp"
 #include "Actions.hpp"
+
+#include "sol/sol.hpp"
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 class RGTrace: public SGE::Object
 {
@@ -56,18 +61,18 @@ public:
 const float DiagonalDistance::sqrt2 = sqrt(2.f);
 
 
-void RavenGameState::InitRandomEngine()
+void DemoGameState::InitRandomEngine()
 {
 	this->rand = std::bind(std::uniform_int_distribution<size_t>(0, graph.VertexCount()-1u), std::default_random_engine{});
 }
 
-GridCell* RavenGameState::GetCell(b2Vec2 pos)
+GridCell* DemoGameState::GetCell(b2Vec2 pos)
 {
 	size_t x = size_t(std::floor(pos.x)), y = size_t(std::floor(pos.y));
 	return &(cells[y][x]);
 }
 
-GridVertex* RavenGameState::GetVertex(b2Vec2 pos)
+GridVertex* DemoGameState::GetVertex(b2Vec2 pos)
 {
 	GridVertex* res = this->GetCell(pos)->vertex;
 	if(!res)
@@ -87,13 +92,13 @@ GridVertex* RavenGameState::GetVertex(b2Vec2 pos)
 	}
 	return res;
 }
-GridVertex* RavenGameState::GetRandomVertex()
+GridVertex* DemoGameState::GetRandomVertex()
 {
 	GridVertex* res = graph[this->rand()];
 	return res;
 }
 
-GridVertex* RavenGameState::GetRandomVertex(const b2Vec2& position, const float limit, bool inside = true)
+GridVertex* DemoGameState::GetRandomVertex(const b2Vec2& position, const float limit, bool inside = true)
 {
 	GridVertex* res = graph[this->rand()];
 	if(inside)
@@ -113,13 +118,13 @@ GridVertex* RavenGameState::GetRandomVertex(const b2Vec2& position, const float 
 	return res;
 }
 
-Path RavenGameState::GetPath(GridVertex * begin, GridVertex * end)
+Path DemoGameState::GetPath(GridVertex * begin, GridVertex * end)
 {
 	this->graph.AStar(begin, end, DiagonalDistance());
 	return Path(begin, end);
 }
 
-void RavenGameState::UseItem(Item* item)
+void DemoGameState::UseItem(Item* item)
 {
 	for(auto& bot: this->bots)
 	{
@@ -128,7 +133,7 @@ void RavenGameState::UseItem(Item* item)
 	this->world->RemoveItem(item);
 }
 
-void RavenGameState::NewRocket(b2Vec2 pos, b2Vec2 direction)
+void DemoGameState::NewRocket(b2Vec2 pos, b2Vec2 direction)
 {
 	direction.Normalize();
 	Rocket* rocket = new Rocket(pos + 0.5f * direction, direction);
@@ -137,16 +142,16 @@ void RavenGameState::NewRocket(b2Vec2 pos, b2Vec2 direction)
 	this->rockets.push_back(rocket);
 }
 
-void RavenGameState::AddExplosion(Rocket* rocket)
+void DemoGameState::AddExplosion(Rocket* rocket)
 {
 	rocket->setShape(Rocket::ExplosionShape());
-	rocket->setLayer(-0.6);
+	rocket->setLayer(-0.6f);
 	this->explosionBatch->addObject(rocket);
 	this->explosions.push_back(rocket);
 }
 
 
-void RavenGameState::RemoveRocket(Rocket* rocket)
+void DemoGameState::RemoveRocket(Rocket* rocket)
 {
 	this->world->RemoveRocket(rocket);
 	this->rocketBatch->removeObject(rocket);
@@ -154,7 +159,7 @@ void RavenGameState::RemoveRocket(Rocket* rocket)
 	this->AddExplosion(rocket);
 }
 
-void RavenGameState::RemoveExplosion(Rocket* rocket)
+void DemoGameState::RemoveExplosion(Rocket* rocket)
 {
 	this->explosionBatch->removeObject(rocket);
 	this->explosions.erase(std::find(this->explosions.begin(), this->explosions.end(), rocket));
@@ -162,7 +167,7 @@ void RavenGameState::RemoveExplosion(Rocket* rocket)
 }
 
 template <typename T>
-void RavenGameState::GenerateItems(const size_t bots, SGE::RealSpriteBatch* batch)
+void DemoGameState::GenerateItems(const size_t bots, SGE::RealSpriteBatch* batch)
 {
 	for(size_t i = 0u; i < bots; ++i)
 	{
@@ -172,14 +177,14 @@ void RavenGameState::GenerateItems(const size_t bots, SGE::RealSpriteBatch* batc
 	}
 }
 
-bool RavenScene::init()
+bool DemoScene::init()
 {
 	return true;
 }
 
 constexpr size_t ObstaclesNum = 12u;
 
-RavenScene::RavenScene(SGE::Game* game, const char* path) : Scene(), world(Width, Height), game(game),
+DemoScene::DemoScene(SGE::Game* game, const char* path) : Scene(), world(Width, Height), game(game),
 path([game](const char* path)
 {
 	return game->getGamePath() + path;
@@ -233,9 +238,58 @@ public:
 
 constexpr size_t Bots = 5u;
 
-void RavenScene::loadScene()
+class InputLua : public SGE::Action
 {
-	this->gs = new RavenGameState();
+	sol::state lua;
+public:
+	InputLua() : Action(true)
+	{
+		this->lua.open_libraries(sol::lib::base, sol::lib::math);
+	}
+
+	virtual void action_begin() override
+	{
+	}
+	virtual void action_main() override
+	{
+#ifdef _WIN32
+		//This works!
+		HWND console = GetConsoleWindow();
+		BringWindowToTop(console);
+		SetActiveWindow(console);
+#endif
+		std::string script;
+		std::getline(std::cin, script);
+		if (script.find("load ") == 0)
+		{
+			auto result = this->lua.script_file(script.substr(5), sol::script_pass_on_error);
+			if (!result.valid())
+			{
+				std::cerr << "Failed to execute: " << script << std::endl;
+				sol::error err = result;
+				std::cerr << err.what() << std::endl;;
+			}
+		}
+		else
+		{
+			auto result = this->lua.script(script, sol::script_pass_on_error);
+			if (!result.valid())
+			{
+				std::cerr << "Failed to execute: " << script << std::endl;
+				sol::error err = result;
+				std::cerr << err.what() << std::endl;;
+			}
+		}
+		SGE::Game::getGame()->raiseWindow();
+	}
+	virtual void action_ends() override
+	{
+	}
+};
+
+void DemoScene::loadScene()
+{
+	this->gs = new DemoGameState();
 	this->gs->world = &this->world;
 
 	//RenderBatches
@@ -362,7 +416,7 @@ void RavenScene::loadScene()
 
 	//Grid
 //#define GraphCellDebug
-#define GraphEdgeDebug
+//#define GraphEdgeDebug
 	{
 		std::queue<GridCellBuild*> cells;
 		int intersections = 0;
@@ -534,7 +588,7 @@ void RavenScene::loadScene()
 		for(int i = 0; i < Bots; ++i)
 		{
 			this->gs->bots.emplace_back(this->gs->GetRandomVertex()->Label().position, getCircle(), &this->world);
-			RavenBot* bot = &this->gs->bots.back();
+			DemoBot* bot = &this->gs->bots.back();
 			botBatch->addObject(bot);
 			this->world.AddMover(bot);
 			bot->RailgunTrace = new RGTrace();
@@ -558,14 +612,17 @@ void RavenScene::loadScene()
 	this->addLogic(new BotLogic(&this->world, this->gs));
 	this->addLogic(new ItemLogic(&this->world, this->gs));
 	this->addLogic(new RocketLogic(this->gs, &this->world));
+
+	//
+	game->mapAction(SGE::InputBinder(new InputLua(), SGE::Key::Return));
 }
 
-void RavenScene::unloadScene()
+void DemoScene::unloadScene()
 {
 	this->finalize();
 }
 
-RavenScene::~RavenScene()
+DemoScene::~DemoScene()
 {
 	std::cout << "~MainScene" << std::endl;
 }
@@ -580,7 +637,7 @@ void vec_clear(Vec& vec)
 	vec.clear();
 }
 
-void RavenScene::finalize()
+void DemoScene::finalize()
 {
 	game->getRenderer()->deleteSceneBatch(this);
 	delete this->gs;
@@ -592,5 +649,5 @@ void RavenScene::finalize()
 	game->unmapAll();
 }
 
-void RavenScene::onDraw()
+void DemoScene::onDraw()
 {}

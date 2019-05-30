@@ -4,7 +4,7 @@
 #include "SteeringBehaviours.hpp"
 
 class World;
-class RavenBot;
+class DemoBot;
 class Item;
 
 enum class BotState: char
@@ -17,7 +17,7 @@ enum class BotState: char
 	GettingArmor
 };
 
-class RavenBot: public SGE::Object
+class DemoBot: public SGE::Object
 {
 public:
 	constexpr static float RailgunReload = 5.f;
@@ -44,14 +44,14 @@ protected:
 	unsigned rlAmmo = 15u;
 	bool hit = false;
 	World* world = nullptr;
-	SteeringBehaviours* steering = new RavenSteering(this);
+	SteeringBehaviours* steering = new DemoSteering(this);
 	BotState state = BotState::Wandering;
 public:
-	std::set<RavenBot*> enemies;
+	std::set<DemoBot*> enemies;
 	std::set<Item*> items;
 	SGE::Object* RailgunTrace = nullptr;
 
-	RavenBot(const b2Vec2& position, SGE::Shape* shape, World* world, const b2Vec2& heading = b2Vec2{1.f,0.f})
+	DemoBot(const b2Vec2& position, SGE::Shape* shape, World* world, const b2Vec2& heading = b2Vec2{1.f,0.f})
 		: Object(position, true, shape), heading(heading), side(heading.Skew()), world(world)
 	{
 		this->orientation = heading.Orientation();
