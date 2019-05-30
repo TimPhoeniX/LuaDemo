@@ -5,6 +5,7 @@
 #include <Object/Shape/sge_shape.hpp>
 #include <algorithm>
 #include <random>
+#include <thread>
 
 #include "DemoScene.hpp"
 #include "Image.hpp"
@@ -241,23 +242,15 @@ constexpr size_t Bots = 5u;
 class InputLua : public SGE::Action
 {
 	sol::state lua;
+	std::thread thread;
 public:
 	InputLua() : Action(true)
 	{
 		this->lua.open_libraries(sol::lib::base, sol::lib::math);
 	}
 
-	virtual void action_begin() override
+	void runLua()
 	{
-	}
-	virtual void action_main() override
-	{
-#ifdef _WIN32
-		//This works!
-		HWND console = GetConsoleWindow();
-		BringWindowToTop(console);
-		SetActiveWindow(console);
-#endif
 		std::string script;
 		std::getline(std::cin, script);
 		if (script.find("load ") == 0)
@@ -281,6 +274,23 @@ public:
 			}
 		}
 		SGE::Game::getGame()->raiseWindow();
+	}
+
+
+	virtual void action_begin() override
+	{
+	}
+	virtual void action_main() override
+	{
+#ifdef _WIN32
+		//This works!
+		HWND console = GetConsoleWindow();
+		BringWindowToTop(console);
+		SetActiveWindow(console);
+#endif
+		if (thread.joinable())
+			thread.join();
+		this->thread = std::thread(&InputLua::runLua, this);
 	}
 	virtual void action_ends() override
 	{
