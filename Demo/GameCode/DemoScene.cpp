@@ -626,10 +626,12 @@ void DemoScene::loadScene()
 	//Players
 	{
 		this->gs->bots.reserve(Bots);
+		this->gs->lua.create_table("Bots");
 		for(int i = 0; i < Bots; ++i)
 		{
 			this->gs->bots.emplace_back(this->gs->GetRandomVertex()->Label().position, getCircle(), &this->world);
 			DemoBot* bot = &this->gs->bots.back();
+			this->gs->lua["Bots"][i] = bot;
 			botBatch->addObject(bot);
 			this->world.AddMover(bot);
 			bot->RailgunTrace = new RGTrace();
