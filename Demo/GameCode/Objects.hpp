@@ -8,7 +8,6 @@ class Rocket: public SGE::Object
 {
 	constexpr static float width = 0.8f;
 	constexpr static float height = 0.5f * width;
-	constexpr static float speed = 5.f;
 	constexpr static float radius = 3.f;
 	static SGE::Shape* Shape()
 	{
@@ -31,9 +30,9 @@ public:
 		return expShape;
 	}
 
-	constexpr static float Speed()
+	static float Speed()
 	{
-		return speed;
+		return DemoBot::RocketSpeed;
 	}
 
 	constexpr static float Radius()

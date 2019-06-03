@@ -3,6 +3,7 @@
 
 #include <Game/sge_game.hpp>
 #include <Scene/sge_scene.hpp>
+#include <sol/sol.hpp>
 #include "DemoBot.hpp"
 #include "World.hpp"
 #include "GridGraph.hpp"
@@ -44,6 +45,7 @@ public:
 	std::vector<Rocket*> rockets;
 	std::vector<Rocket*> explosions;
 	std::vector<Item*> items;
+	sol::state lua;
 
 	void InitRandomEngine();
 
@@ -62,6 +64,8 @@ public:
 	void AddExplosion(Rocket* rocket);
 	void RemoveRocket(Rocket* rocket);
 	void RemoveExplosion(Rocket* rocket);
+
+	void RegisterTypes();
 };
 
 class DemoScene : public SGE::Scene

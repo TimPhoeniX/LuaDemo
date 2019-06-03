@@ -55,5 +55,5 @@ RocketAmmo::RocketAmmo(b2Vec2 pos): Item(pos, IType::RLAmmo)
 
 void RocketAmmo::consumeItem(DemoBot& bot)
 {
-	bot.AddRocketAmmo(15u);
+	bot.AddLauncherAmmo(15u);
 }

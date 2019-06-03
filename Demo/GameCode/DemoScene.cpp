@@ -23,7 +23,6 @@
 #include "Graph.hpp"
 #include "Actions.hpp"
 
-#include "sol/sol.hpp"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -178,6 +177,37 @@ void DemoGameState::GenerateItems(const size_t bots, SGE::RealSpriteBatch* batch
 	}
 }
 
+void DemoGameState::RegisterTypes()
+{
+	this->lua.new_usertype<DemoBot>("Bot",
+		//Static member variables
+		"RailgunReload", sol::var(std::ref(DemoBot::RailgunReload)),
+		"LauncherReload", sol::var(std::ref(DemoBot::LauncherReload)),
+		"RailgunDamage", sol::var(std::ref(DemoBot::RailgunDamage)),
+		"LauncherDamage", sol::var(std::ref(DemoBot::LauncherDamage)),
+		"RailgunSpread", sol::var(std::ref(DemoBot::RailgunSpread)),
+		"LauncherSpread", sol::var(std::ref(DemoBot::LauncherSpread)),
+		"RailgunRate", sol::var(std::ref(DemoBot::RailgunRate)),
+		"LauncherRate", sol::var(std::ref(DemoBot::LauncherRate)),
+		"RailgunDefaultAmmo", sol::var(std::ref(DemoBot::RailgunDefaultAmmo)),
+		"LauncherDefaultAmmo", sol::var(std::ref(DemoBot::LauncherDefaultAmmo)),
+		"DefaultHealth", sol::var(std::ref(DemoBot::DefaultHealth)),
+		"DefaultArmor", sol::var(std::ref(DemoBot::DefaultArmor)),
+		"MaxSpeed", sol::var(std::ref(DemoBot::maxSpeed)),
+		"MaxForce", sol::var(std::ref(DemoBot::maxForce)),
+		"SwapSpeed", sol::var(std::ref(DemoBot::SwapSpeed)),
+		//Readonly Properites
+		"RGAmmo", sol::property(&DemoBot::RGAmmo),
+		"RLAmmo", sol::property(&DemoBot::RLAmmo)
+	);
+
+	this->lua.new_enum<CurrentWeapon>("CurrentWeapon",
+	{
+		{"Railgun", CurrentWeapon::Railgun },
+		{"Launcher", CurrentWeapon::Launcher }
+	});
+}
+
 bool DemoScene::init()
 {
 	return true;
@@ -241,10 +271,10 @@ constexpr size_t Bots = 5u;
 
 class InputLua : public SGE::Action
 {
-	sol::state lua;
+	sol::state_view lua;
 	std::thread thread;
 public:
-	InputLua() : Action(true)
+	InputLua(sol::state& state) : Action(true), lua(state)
 	{
 		this->lua.open_libraries(sol::lib::base, sol::lib::math);
 	}
@@ -300,6 +330,7 @@ public:
 void DemoScene::loadScene()
 {
 	this->gs = new DemoGameState();
+	this->gs->RegisterTypes();
 	this->gs->world = &this->world;
 
 	//RenderBatches
@@ -325,8 +356,8 @@ void DemoScene::loadScene()
 	SGE::RealSpriteBatch* botBatch = renderer->getBatch(renderer->newBatch(basicProgram, zombieTexPath, Bots));
 
 	this->gs->railBatch = renderer->getBatch(renderer->newBatch(basicProgram, beamPath, Bots));
-	this->gs->rocketBatch = renderer->getBatch(renderer->newBatch(basicProgram, rocketPath, Bots * 20u));
-	this->gs->explosionBatch = renderer->getBatch(renderer->newBatch(basicProgram, explosionPath, Bots * 20u));
+	this->gs->rocketBatch = renderer->getBatch(renderer->newBatch(basicProgram, rocketPath, Bots * 100u));
+	this->gs->explosionBatch = renderer->getBatch(renderer->newBatch(basicProgram, explosionPath, Bots * 100u));
 
 	SGE::RealSpriteBatch* healthBatch = renderer->getBatch(renderer->newBatch(basicProgram, healthPath, Bots));
 	SGE::RealSpriteBatch* armorBatch = renderer->getBatch(renderer->newBatch(basicProgram, armorPath, Bots));
@@ -624,7 +655,7 @@ void DemoScene::loadScene()
 	this->addLogic(new RocketLogic(this->gs, &this->world));
 
 	//
-	game->mapAction(SGE::InputBinder(new InputLua(), SGE::Key::Return));
+	game->mapAction(SGE::InputBinder(new InputLua(this->gs->lua), SGE::Key::Return));
 }
 
 void DemoScene::unloadScene()

@@ -17,15 +17,31 @@ enum class BotState: char
 	GettingArmor
 };
 
+enum class CurrentWeapon : char
+{
+	Railgun,
+	Launcher
+};
+
 class DemoBot: public SGE::Object
 {
 public:
-	constexpr static float RailgunReload = 5.f;
-	constexpr static float LauncherReload = 2.f;
-	constexpr static float RailgunDamage = 100.f;
-	constexpr static float LauncherDamage = 65.f;
-	constexpr static float DefaultHealth = 150.f;
-	constexpr static float DefaultArmor = 250.f;
+	static float RailgunReload;
+	static float LauncherReload;
+	static float RailgunDamage;
+	static float LauncherDamage;
+	static float RailgunSpread;
+	static float LauncherSpread;
+	static float RailgunRate;
+	static float LauncherRate;
+	static float RocketSpeed;
+	static unsigned RailgunDefaultAmmo;
+	static unsigned LauncherDefaultAmmo;
+	static float DefaultHealth;
+	static float DefaultArmor;
+	static float maxSpeed;
+	static float maxForce;
+	static float SwapSpeed;
 
 protected:
 	b2Vec2 velocity = b2Vec2_zero;
@@ -33,19 +49,23 @@ protected:
 	b2Vec2 side = b2Vec2_zero;
 	float mass = 1.f;
 	float massInv = 1.f;
-	float maxSpeed = 3.f;
-	float maxForce = 15.f;
 	float maxTurnRate = 90.f;
 	float health = DefaultHealth;
 	float armor = DefaultArmor;
 	float rgCD = RailgunReload;
 	float rlCD = LauncherReload;
-	unsigned rgAmmo = 10u;
-	unsigned rlAmmo = 15u;
+	float rgRate = -1.f;
+	float rlRate = -1.f;
+	float swapping = -1.f;
+	unsigned rgLoadedAmmo = RailgunDefaultAmmo;
+	unsigned rlLoadedAmmo = LauncherDefaultAmmo;
+	unsigned rgSpareAmmo = 0u;
+	unsigned rlSpareAmmo = 0u;
 	bool hit = false;
 	World* world = nullptr;
 	SteeringBehaviours* steering = new DemoSteering(this);
 	BotState state = BotState::Wandering;
+	CurrentWeapon cw = CurrentWeapon::Railgun;
 public:
 	std::set<DemoBot*> enemies;
 	std::set<Item*> items;
@@ -222,12 +242,22 @@ public:
 
 	unsigned RGAmmo() const
 	{
-		return this->rgAmmo;
+		return this->rgLoadedAmmo;
 	}
 
 	unsigned RLAmmo() const
 	{
-		return this->rlAmmo;
+		return this->rlLoadedAmmo;
+	}
+
+	unsigned RGSpareAmmo() const
+	{
+		return this->rgSpareAmmo;
+	}
+
+	unsigned RLSpareAmmo() const
+	{
+		return this->rlSpareAmmo;
 	}
 
 	float RLCD() const
@@ -242,12 +272,20 @@ public:
 
 	void AddRailgunAmmo(unsigned i)
 	{
-		this->rgAmmo += i;
+		this->rgSpareAmmo += i;
+		if (this->rgLoadedAmmo == 0u)
+		{
+			this->ReloadRG();
+		}
 	}
 
-	void AddRocketAmmo(unsigned i)
+	void AddLauncherAmmo(unsigned i)
 	{
-		this->rlAmmo += i;
+		this->rlSpareAmmo += i;
+		if (this->rlLoadedAmmo == 0u)
+		{
+			this->ReloadRL();
+		}
 	}
 
 	BotState getState() const
@@ -255,14 +293,14 @@ public:
 		return this->state;
 	}
 
-	bool CanFireRG() const
+	bool IsRGReady() const
 	{
-		return this->rgCD < 0.f;
+		return this->cw == CurrentWeapon::Railgun && this->rgCD < 0.f && this->rgRate < 0.f;
 	}
 
-	bool CanFireRL() const
+	bool IsRLReady() const
 	{
-		return this->rlCD < 0.f;
+		return this->cw == CurrentWeapon::Launcher && this->rlCD < 0.f && this->rgRate < 0.f;
 	}
 
 	bool IsFollowingPath() const
@@ -274,32 +312,74 @@ public:
 	{
 		if(this->rgCD > 0.f) this->rgCD -= delta;
 		if(this->rlCD > 0.f) this->rlCD -= delta;
-		if(this->rgCD < (RailgunReload - 1.f))
+		if(this->rgRate > 0.f) this->rgRate -= delta;
+		if(this->rlRate > 0.f) this->rlRate -= delta;
+		if(this->rgCD < (RailgunReload - 0.5f))
 			this->RailgunTrace->setVisible(false);
+	}
+
+	void ReloadRG()
+	{
+		this->rgCD = RailgunReload;
+		unsigned ammo = std::min(RailgunDefaultAmmo, this->rgSpareAmmo);
+		this->rgLoadedAmmo = ammo;
+		this->rgSpareAmmo -= ammo;
 	}
 
 	bool FireRG()
 	{
-		if(this->rgAmmo > 0u && this->rgCD < 0.f)
+		if(this->rgRate < 0.f && this->rgCD < 0.f && this->rgLoadedAmmo > 0u)
 		{
-			if(this->rgAmmo == 0u) throw std::runtime_error("Bot has no Railgun Ammo!");
-			this->rgAmmo -= 1u;
-			this->rgCD = RailgunReload;
+			if(this->rgLoadedAmmo == 0u)
+				throw std::runtime_error("Bot has no Railgun Ammo!");
+			this->rgLoadedAmmo -= 1u;
+			if (this->rgLoadedAmmo == 0u)
+			{
+				this->ReloadRG();
+			}
+			this->rlRate = LauncherRate;
 			return true;
 		}
 		return false;
 	}
 
+	void ReloadRL()
+	{
+		this->rlCD = LauncherReload;
+		unsigned ammo = std::min(LauncherDefaultAmmo, this->rlSpareAmmo);
+		this->rlLoadedAmmo = ammo;
+		this->rlSpareAmmo -= ammo;
+	}
+
 	bool FireRL()
 	{
-		if(this->rlAmmo > 0u && this->rlCD < 0.f)
+		if(this->rlRate < 0.f && this->rlCD < 0.f && this->rlLoadedAmmo > 0u)
 		{
-			if(this->rlAmmo == 0u) throw std::runtime_error("Bot has no RocketLauncher Ammo!");
-			this->rlAmmo -= 1u;
-			this->rlCD = LauncherReload;
+			if(this->rlLoadedAmmo == 0u)
+				throw std::runtime_error("Bot has no RocketLauncher Ammo!");
+			this->rlLoadedAmmo -= 1u;
+			if (this->rlLoadedAmmo == 0u)
+			{
+				this->ReloadRL();
+			}
+			this->rlRate = LauncherRate;
 			return true;
 		}
 		return false;
+	}
+
+	void SwapWeapon()
+	{
+		if (this->cw == CurrentWeapon::Railgun)
+		{
+			this->cw = CurrentWeapon::Launcher;
+			this->swapping == SwapSpeed;
+		}
+		else
+		{
+			this->cw = CurrentWeapon::Railgun;
+			this->swapping == SwapSpeed;
+		}
 	}
 
 	bool IsDead() const
@@ -313,10 +393,15 @@ public:
 		this->setState(BotState::Wandering);
 		this->health = DefaultHealth;
 		this->armor = DefaultArmor;
-		this->rgAmmo = 10u;
-		this->rlAmmo = 15u;
-		this->rgCD = RailgunReload;
-		this->rlCD = LauncherReload;
+		this->rgLoadedAmmo = RailgunDefaultAmmo;
+		this->rlLoadedAmmo = LauncherDefaultAmmo;
+		this->rlSpareAmmo = RailgunDefaultAmmo;
+		this->rgSpareAmmo = LauncherDefaultAmmo;
+		this->rgCD = -1.f;
+		this->rlCD = -1.f;
+		this->rlRate = -1.f;
+		this->rgRate = -1.f;
+		this->swapping = -1.f;
 		this->steering->ClearPath();
 		this->steering->setEnemy(nullptr);
 		this->enemies.clear();
@@ -325,6 +410,6 @@ public:
 
 	bool IsReloading() const
 	{
-		return (this->rgCD > 0.f && this->rlCD > 0.f);
+		return this->swapping < 0.f || (this->rgCD > 0.f && this->rlCD > 0.f);
 	}
 };

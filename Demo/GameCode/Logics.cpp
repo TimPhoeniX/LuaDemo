@@ -640,11 +640,11 @@ void BotLogic::updateBot(DemoBot& bot)
 		b2Vec2 direction = enemy->getPosition() - bot.getPosition();
 		float distance = direction.Normalize();
 		bot.setHeading(direction);
-		if(bot.CanFireRG())
+		if(bot.IsRGReady())
 		{
 			this->FireRG(bot);
 		}
-		else if(bot.CanFireRL() && distance > Rocket::Radius())
+		else if(bot.IsRLReady() && distance > Rocket::Radius())
 		{
 			this->FireRL(bot);
 		};
