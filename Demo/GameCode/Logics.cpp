@@ -382,22 +382,22 @@ void BotLogic::updateState(DemoBot& bot)
 		{
 			if(bot.enemies.empty())
 			{
-				if (bot.Health() < 65.f)
+				if (bot.Health() < 0.4f * DemoBot::DefaultHealth)
 				{
 					bot.setState(BotState::GettingHealth);
 				}
-				else if (bot.Armor() < 65.f)
+				else if (bot.Armor() < 0.4f * DemoBot::DefaultArmor)
 				{
 					bot.setState(BotState::GettingArmor);
 				}
-				else if( (bot.RGAmmo() + bot.RLAmmo()) < 15u)
+				else if( (bot.RGSpareAmmo() + bot.RLSpareAmmo()) < (DemoBot::RailgunDefaultAmmo + DemoBot::LauncherDefaultAmmo))
 				{
 					bot.setState(BotState::GettingAmmo);
 				}
 			}
 			else
 			{
-				if (bot.Health() < 65.f || bot.Armor() < 65.f || (bot.RLAmmo() + bot.RGAmmo()) == 0u)
+				if (bot.Health() < 0.4f * DemoBot::DefaultHealth || bot.Armor() < 0.4f * DemoBot::DefaultArmor || bot.TotalAmmo() == 0u)
 				{
 					bot.setState(BotState::Running);
 				}
@@ -412,7 +412,7 @@ void BotLogic::updateState(DemoBot& bot)
 		{
 			if (!bot.enemies.empty())
 			{
-				if (bot.Health() < 65.f || (bot.RGAmmo() + bot.RLAmmo()) == 0u)
+				if (bot.Health() < 0.4f * DemoBot::DefaultHealth || bot.TotalAmmo() == 0u)
 				{
 					bot.setState(BotState::Running);
 				}
@@ -439,7 +439,7 @@ void BotLogic::updateState(DemoBot& bot)
 			}
 			else
 			{
-				if((bot.RGAmmo() + bot.RLAmmo()) > 40u)
+				if((bot.RGSpareAmmo() + bot.RLSpareAmmo()) > 1.5f*(DemoBot::LauncherDefaultAmmo + DemoBot::RailgunDefaultAmmo))
 				{
 					bot.setState(BotState::Wandering);
 				}
@@ -454,7 +454,7 @@ void BotLogic::updateState(DemoBot& bot)
 			}
 			else
 			{
-				if (bot.Health() > 100.f)
+				if (bot.Health() > DemoBot::DefaultHealth)
 				{
 					bot.setState(BotState::Wandering);
 				}
@@ -469,7 +469,7 @@ void BotLogic::updateState(DemoBot& bot)
 			}
 			else
 			{
-				if(bot.Armor() > 200.f)
+				if(bot.Armor() > DemoBot::DefaultArmor)
 				{
 					bot.setState(BotState::Wandering);
 				}
@@ -526,7 +526,7 @@ void BotLogic::FireRG(DemoBot& bot)
 	if(!bot.FireRG()) return;
 	b2Vec2 pos = bot.getPosition();
 	b2Vec2 direction = bot.getHeading();
-	direction = b2Mul(b2Rot(this->randAngle()), direction);
+	direction = b2Mul(b2Rot(this->randAngle(SpreadDistribution(-DemoBot::RailgunSpread, DemoBot::RailgunSpread))), direction);
 	b2Vec2 hitPos = b2Vec2_zero;
 	DemoBot* hitObject = this->world->RaycastBot(&bot, pos, direction, hitPos);
 	bot.RailgunTrace->setVisible(true);
@@ -546,7 +546,7 @@ void BotLogic::FireRL(DemoBot& bot)
 	if(!bot.FireRL()) return;
 	b2Vec2 pos = bot.getPosition();
 	b2Vec2 direction = bot.getHeading();
-	direction = b2Mul(b2Rot(this->randAngle()), direction);
+	direction = b2Mul(b2Rot(this->randAngle(SpreadDistribution(-DemoBot::LauncherSpread, DemoBot::LauncherSpread))), direction);
 	this->gs->NewRocket(pos, direction);
 }
 
@@ -640,14 +640,25 @@ void BotLogic::updateBot(DemoBot& bot)
 		b2Vec2 direction = enemy->getPosition() - bot.getPosition();
 		float distance = direction.Normalize();
 		bot.setHeading(direction);
-		if(bot.IsRGReady())
+		if(bot.IsCurrentWeaponReady())
 		{
-			this->FireRG(bot);
+			switch (bot.CurrentWeapon())
+			{
+			case CurrentWeapon::Railgun:
+				this->FireRG(bot);
+				break;
+			case CurrentWeapon::Launcher:
+				if (distance > Rocket::Radius())
+					this->FireRL(bot);
+				break;
+			default:
+				break;
+			}
 		}
-		else if(bot.IsRLReady() && distance > Rocket::Radius())
+		else if (bot.IsCurrentWeaponReloading())
 		{
-			this->FireRL(bot);
-		};
+			bot.SwapWeapon();
+		}
 		break;
 	}
 	case BotState::Running:

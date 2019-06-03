@@ -196,6 +196,7 @@ void DemoGameState::RegisterTypes()
 		"MaxSpeed", sol::var(std::ref(DemoBot::maxSpeed)),
 		"MaxForce", sol::var(std::ref(DemoBot::maxForce)),
 		"SwapSpeed", sol::var(std::ref(DemoBot::SwapSpeed)),
+		"RocketSpeed", sol::var(std::ref(DemoBot::RocketSpeed)),
 		//Readonly Properites
 		"RGAmmo", sol::property(&DemoBot::RGAmmo),
 		"RLAmmo", sol::property(&DemoBot::RLAmmo)

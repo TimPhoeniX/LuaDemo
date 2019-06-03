@@ -260,6 +260,12 @@ public:
 		return this->rlSpareAmmo;
 	}
 
+	unsigned TotalAmmo() const
+	{
+		return this->rlSpareAmmo + this->rgSpareAmmo
+			+ this->rlLoadedAmmo + this->rgLoadedAmmo;
+	}
+
 	float RLCD() const
 	{
 		return this->rlCD;
@@ -293,6 +299,32 @@ public:
 		return this->state;
 	}
 
+	CurrentWeapon CurrentWeapon() const
+	{
+		return this->cw;
+	}
+
+	bool IsSwapping() const
+	{
+		return this->swapping > 0.f;
+	}
+
+	bool IsCurrentWeaponReady() const
+	{
+		switch (this->cw)
+		{
+		case CurrentWeapon::Railgun:
+			return this->IsRGReady();
+			break;
+		case CurrentWeapon::Launcher:
+			return this->IsRLReady();
+			break;
+		default:
+			return false;
+			break;
+		}
+	}
+
 	bool IsRGReady() const
 	{
 		return this->cw == CurrentWeapon::Railgun && this->rgCD < 0.f && this->rgRate < 0.f;
@@ -310,11 +342,12 @@ public:
 	
 	void Reloading(float delta)
 	{
+		if(this->swapping > 0.f) this->swapping -= delta;
 		if(this->rgCD > 0.f) this->rgCD -= delta;
 		if(this->rlCD > 0.f) this->rlCD -= delta;
 		if(this->rgRate > 0.f) this->rgRate -= delta;
 		if(this->rlRate > 0.f) this->rlRate -= delta;
-		if(this->rgCD < (RailgunReload - 0.5f))
+		if(this->rgRate < 0.f)
 			this->RailgunTrace->setVisible(false);
 	}
 
@@ -337,7 +370,7 @@ public:
 			{
 				this->ReloadRG();
 			}
-			this->rlRate = LauncherRate;
+			this->rgRate = RailgunRate;
 			return true;
 		}
 		return false;
@@ -373,12 +406,12 @@ public:
 		if (this->cw == CurrentWeapon::Railgun)
 		{
 			this->cw = CurrentWeapon::Launcher;
-			this->swapping == SwapSpeed;
+			this->swapping = SwapSpeed;
 		}
 		else
 		{
 			this->cw = CurrentWeapon::Railgun;
-			this->swapping == SwapSpeed;
+			this->swapping = SwapSpeed;
 		}
 	}
 
@@ -410,6 +443,22 @@ public:
 
 	bool IsReloading() const
 	{
-		return this->swapping < 0.f || (this->rgCD > 0.f && this->rlCD > 0.f);
+		return (this->rgCD > 0.f && this->rlCD > 0.f);
+	}
+
+	bool IsCurrentWeaponReloading() const
+	{
+		switch (this->cw)
+		{
+		case CurrentWeapon::Railgun:
+			return this->rgCD > 0.f;
+			break;
+		case CurrentWeapon::Launcher:
+			return this->rlCD > 0.f;
+			break;
+		default:
+			return false;
+			break;
+		}
 	}
 };
