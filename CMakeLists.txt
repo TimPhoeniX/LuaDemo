@@ -3,6 +3,9 @@ project(LuaDemo)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeModules")
 
+set(Boost_NO_BOOST_CMAKE ON)
+set(Boost_USE_STATIC_LIBS ON)
+
 include(CMakeModules/sge_debug_info.cmake)
 
 #option(PACKAGE_MANAGER "Default project package manager default: NONE" NONE)
@@ -119,7 +122,6 @@ if (${PACKAGE_MANAGER} STREQUAL "Conan")
 
 	include(${CMAKE_CURRENT_SOURCE_DIR}/conanbuildinfo.cmake)
 	conan_basic_setup()
-
 	include(CMakeModules/sge_common_find.cmake)
 elseif(${PACKAGE_MANAGER} STREQUAL "Setup")
 	message(STATUS "SETUP_BUILD_DIR: ${SETUP_BUILD_DIR}")
@@ -133,7 +135,8 @@ else()
 	include(CMakeModules/sge_common_find.cmake)
 endif()
 
-find_package(Boost COMPONENTS date_time program_options system filesystem REQUIRED)
+
+find_package(Boost REQUIRED COMPONENTS date_time program_options system filesystem )
 if(NOT Boost_FOUND)
 	message(Error "Boost not found")
 else()
