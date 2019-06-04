@@ -210,6 +210,7 @@ void DemoGameState::RegisterTypes()
 		"Health", sol::property(&DemoBot::Health),
 		"Armor", sol::property(&DemoBot::Armor),
 		"State", sol::property(&DemoBot::getState),
+		"CurrentWeapon", sol::property(&DemoBot::CurrentWeapon),
 		//Modifiers
 		"AddHealth", &DemoBot::AddHealth,
 		"AddArmor", &DemoBot::AddArmor,
@@ -219,7 +220,7 @@ void DemoGameState::RegisterTypes()
 		"SwapWeapon", &DemoBot::SwapWeapon
 	);
 
-	this->lua.new_enum<BotState>("BotState",
+	this->lua.new_enum<BotState,false>("BotState",
 		{
 			{"Wandering", BotState::Wandering},
 			{"Attacking", BotState::Attacking},
@@ -229,13 +230,13 @@ void DemoGameState::RegisterTypes()
 			{"GettingArmor", BotState::GettingArmor}
 		});
 
-	this->lua.new_enum<CurrentWeapon>("CurrentWeapon",
+	this->lua.new_enum<CurrentWeapon,false>("CurrentWeapon",
 	{
 		{"Railgun", CurrentWeapon::Railgun},
 		{"Launcher", CurrentWeapon::Launcher}
 	});
 
-	this->lua.new_enum<Item::IType>("ItemType",
+	this->lua.new_enum<Item::IType,false>("ItemType",
 	{
 		{"HealthPack", Item::IType::Health},
 		{"ArmorPack", Item::IType::Armor},
@@ -248,6 +249,8 @@ void DemoGameState::RegisterTypes()
 	this->lua.new_usertype<RailgunAmmo>("RailgunAmmo", "Value", sol::var(std::ref(RailgunAmmo::AmmoValue)));
 	this->lua.new_usertype<RocketAmmo>("LauncherAmmo", "Value", sol::var(std::ref(RocketAmmo::AmmoValue)));
 	this->lua.new_usertype<Item>("Items", "RespawnTime", sol::var(std::ref(Item::itemCD)));
+
+	this->lua.script_file("./base_script.lua");
 }
 
 bool DemoScene::init()
@@ -318,7 +321,6 @@ class InputLua : public SGE::Action
 public:
 	InputLua(sol::state& state) : Action(true), lua(state)
 	{
-		this->lua.open_libraries(sol::lib::base, sol::lib::math);
 	}
 
 	void runLua()
@@ -372,6 +374,7 @@ public:
 void DemoScene::loadScene()
 {
 	this->gs = new DemoGameState();
+	this->gs->lua.open_libraries(sol::lib::base, sol::lib::math, sol::lib::string);
 	this->gs->RegisterTypes();
 	this->gs->world = &this->world;
 
