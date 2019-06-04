@@ -4,6 +4,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
+#include <glm/vec2.hpp>
 
 #include <Action/Actions/sge_action_move.hpp>
 #include <IO/KeyboardState/sge_keyboard_state.hpp>

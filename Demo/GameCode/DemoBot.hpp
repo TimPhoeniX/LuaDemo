@@ -315,13 +315,10 @@ public:
 		{
 		case CurrentWeapon::Railgun:
 			return this->IsRGReady();
-			break;
 		case CurrentWeapon::Launcher:
 			return this->IsRLReady();
-			break;
 		default:
 			return false;
-			break;
 		}
 	}
 
@@ -446,19 +443,17 @@ public:
 		return (this->rgCD > 0.f && this->rlCD > 0.f);
 	}
 
+	[[nodiscard]]
 	bool IsCurrentWeaponReloading() const
 	{
 		switch (this->cw)
 		{
 		case CurrentWeapon::Railgun:
 			return this->rgCD > 0.f;
-			break;
 		case CurrentWeapon::Launcher:
 			return this->rlCD > 0.f;
-			break;
 		default:
 			return false;
-			break;
 		}
 	}
 };

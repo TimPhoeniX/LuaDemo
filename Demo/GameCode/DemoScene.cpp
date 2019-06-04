@@ -198,15 +198,56 @@ void DemoGameState::RegisterTypes()
 		"SwapSpeed", sol::var(std::ref(DemoBot::SwapSpeed)),
 		"RocketSpeed", sol::var(std::ref(DemoBot::RocketSpeed)),
 		//Readonly Properites
-		"RGAmmo", sol::property(&DemoBot::RGAmmo),
-		"RLAmmo", sol::property(&DemoBot::RLAmmo)
+		"RGLoadedAmmo", sol::property(&DemoBot::RGAmmo),
+		"RLLoadedAmmo", sol::property(&DemoBot::RLAmmo),
+		"RGSpareAmmo", sol::property(&DemoBot::RGSpareAmmo),
+		"RLSpareAmmo", sol::property(&DemoBot::RLSpareAmmo),
+		"TotalAmmo", sol::property(&DemoBot::TotalAmmo),
+		"RLReloadTime", sol::property(&DemoBot::RLCD),
+		"RGReloadTime", sol::property(&DemoBot::RGCD),
+		"IsSwappingWeapon", sol::property(&DemoBot::IsSwapping),
+		"IsReloadingWeapon", sol::property(&DemoBot::IsCurrentWeaponReloading),
+		"Health", sol::property(&DemoBot::Health),
+		"Armor", sol::property(&DemoBot::Armor),
+		"State", sol::property(&DemoBot::getState),
+		//Modifiers
+		"AddHealth", &DemoBot::AddHealth,
+		"AddArmor", &DemoBot::AddArmor,
+		"AddRailgunAmmo", &DemoBot::AddRailgunAmmo,
+		"AddLauncherAmmo", &DemoBot::AddLauncherAmmo,
+		"AddDamage", &DemoBot::Damage,
+		"SwapWeapon", &DemoBot::SwapWeapon
 	);
+
+	this->lua.new_enum<BotState>("BotState",
+		{
+			{"Wandering", BotState::Wandering},
+			{"Attacking", BotState::Attacking},
+			{"Running", BotState::Running},
+			{"GettingAmmo", BotState::GettingAmmo},
+			{"GettingHealth", BotState::GettingHealth},
+			{"GettingArmor", BotState::GettingArmor}
+		});
 
 	this->lua.new_enum<CurrentWeapon>("CurrentWeapon",
 	{
-		{"Railgun", CurrentWeapon::Railgun },
-		{"Launcher", CurrentWeapon::Launcher }
+		{"Railgun", CurrentWeapon::Railgun},
+		{"Launcher", CurrentWeapon::Launcher}
 	});
+
+	this->lua.new_enum<Item::IType>("ItemType",
+	{
+		{"HealthPack", Item::IType::Health},
+		{"ArmorPack", Item::IType::Armor},
+		{"RailgunAmmo", Item::IType::RGAmmo},
+		{"LauncherAmmo", Item::IType::RLAmmo},
+	});
+
+	this->lua.new_usertype<HealthPack>("HealthPack", "Value", sol::var(std::ref(HealthPack::HealthValue)));
+	this->lua.new_usertype<ArmorPack>("ArmorPack", "Value", sol::var(std::ref(ArmorPack::ArmorValue)));
+	this->lua.new_usertype<RailgunAmmo>("RailgunAmmo", "Value", sol::var(std::ref(RailgunAmmo::AmmoValue)));
+	this->lua.new_usertype<RocketAmmo>("LauncherAmmo", "Value", sol::var(std::ref(RocketAmmo::AmmoValue)));
+	this->lua.new_usertype<Item>("Items", "RespawnTime", sol::var(std::ref(Item::itemCD)));
 }
 
 bool DemoScene::init()
@@ -236,7 +277,7 @@ struct GridCellBuild
 		Invalid
 	} state = State::Untested;
 	SGE::Object* dummy = nullptr;
-	GridVertex* vertex;
+	GridVertex* vertex = nullptr;
 };
 
 class GraphCellDummy: public SGE::Object
@@ -360,10 +401,10 @@ void DemoScene::loadScene()
 	this->gs->rocketBatch = renderer->getBatch(renderer->newBatch(basicProgram, rocketPath, Bots * 100u));
 	this->gs->explosionBatch = renderer->getBatch(renderer->newBatch(basicProgram, explosionPath, Bots * 100u));
 
-	SGE::RealSpriteBatch* healthBatch = renderer->getBatch(renderer->newBatch(basicProgram, healthPath, Bots));
-	SGE::RealSpriteBatch* armorBatch = renderer->getBatch(renderer->newBatch(basicProgram, armorPath, Bots));
-	SGE::RealSpriteBatch* rgammoBatch = renderer->getBatch(renderer->newBatch(basicProgram, rgammoPath, Bots));
-	SGE::RealSpriteBatch* rlammoBatch = renderer->getBatch(renderer->newBatch(basicProgram, rlammoPath, Bots));
+	SGE::RealSpriteBatch* healthBatch = renderer->getBatch(renderer->newBatch(basicProgram, healthPath, Bots * 5u));
+	SGE::RealSpriteBatch* armorBatch = renderer->getBatch(renderer->newBatch(basicProgram, armorPath, Bots * 5u));
+	SGE::RealSpriteBatch* rgammoBatch = renderer->getBatch(renderer->newBatch(basicProgram, rgammoPath, Bots * 5u));
+	SGE::RealSpriteBatch* rlammoBatch = renderer->getBatch(renderer->newBatch(basicProgram, rlammoPath, Bots * 5u));
 
 	SGE::RealSpriteBatch* graphTestBatch = renderer->getBatch(renderer->newBatch(basicProgram, cellTexPath, size_t(Width * Height), false, true));
 	SGE::RealSpriteBatch* graphEdgeTestBatch = renderer->getBatch(renderer->newBatch(basicProgram, "Resources/Textures/path.png", size_t(Width * Height * 8u), false, true));
@@ -414,7 +455,7 @@ void DemoScene::loadScene()
 
 	//Camera
 	SGE::Camera2d* cam = game->getCamera();
-	cam->setPosition({ 32.f * Width, 32.f * Height });
+	cam->setPosition(glm::vec2{ 32.f * Width, 32.f * Height });
 	cam->setCameraScale(0.197f);
 	this->addLogic(new SpectatorCamera(10, SGE::Key::W, SGE::Key::S, SGE::Key::A, SGE::Key::D, cam));
 	this->addLogic(new SGE::Logics::CameraZoom(cam, 0.5f, 1.f, 0.197f, SGE::Key::Q, SGE::Key::E));
@@ -632,7 +673,7 @@ void DemoScene::loadScene()
 		{
 			this->gs->bots.emplace_back(this->gs->GetRandomVertex()->Label().position, getCircle(), &this->world);
 			DemoBot* bot = &this->gs->bots.back();
-			this->gs->lua["Bots"][i] = bot;
+			this->gs->lua["Bots"][i+1] = bot;
 			botBatch->addObject(bot);
 			this->world.AddMover(bot);
 			bot->RailgunTrace = new RGTrace();

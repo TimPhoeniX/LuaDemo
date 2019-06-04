@@ -84,13 +84,13 @@ public:
 		Health, Armor, RLAmmo, RGAmmo
 	};
 protected:
-	constexpr static float itemCD = 15.f;
 	virtual void consumeItem(DemoBot&) = 0;
 	IType type;
 	float cd = itemCD;
 
 	Item(b2Vec2 pos, IType type);
 public:
+	static float itemCD;
 	void useItem(DemoBot&);
 
 
@@ -121,6 +121,7 @@ class HealthPack: public Item
 protected:
 	void consumeItem(DemoBot& bot) override;
 public:
+	static float HealthValue;
 	HealthPack();
 	explicit HealthPack(b2Vec2 pos);
 };
@@ -130,6 +131,7 @@ class ArmorPack: public Item
 protected:
 	void consumeItem(DemoBot& bot) override;
 public:
+	static float ArmorValue;
 	ArmorPack();
 	explicit ArmorPack(b2Vec2 pos);
 
@@ -140,6 +142,7 @@ class RailgunAmmo: public Item
 protected:
 	void consumeItem(DemoBot& bot) override;
 public:
+	static unsigned AmmoValue;
 	RailgunAmmo();
 	explicit RailgunAmmo(b2Vec2 pos);
 };
@@ -149,6 +152,7 @@ class RocketAmmo: public Item
 protected:
 	void consumeItem(DemoBot& bot) override;
 public:
+	static unsigned AmmoValue;
 	RocketAmmo();
 	explicit RocketAmmo(b2Vec2 pos);
 };
