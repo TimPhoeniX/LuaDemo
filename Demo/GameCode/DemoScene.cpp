@@ -325,6 +325,7 @@ public:
 
 	void runLua()
 	{
+		std::cout << "> ";
 		std::string script;
 		std::getline(std::cin, script);
 		if (script.find("load ") == 0)

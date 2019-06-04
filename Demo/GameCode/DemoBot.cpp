@@ -19,4 +19,4 @@ float DemoBot::DefaultArmor = 250.f;
 
 float DemoBot::maxSpeed = 3.f;
 float DemoBot::maxForce = 15.f;
-float DemoBot::SwapSpeed = 1.f;
+float DemoBot::SwapSpeed = 3.f;

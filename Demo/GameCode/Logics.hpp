@@ -134,17 +134,17 @@ protected:
 	void UpdateEnemy(DemoBot& bot);
 	void GetItem(DemoBot& bot, Item::IType type);
 	void updateBot(DemoBot& bot);
-	
+	std::default_random_engine dre;
 	std::function<float(std::uniform_real_distribution<float>&)> randAngle;
 public:
 	using SpreadDistribution = std::uniform_real_distribution<float>;
 	BotLogic(World* world, DemoGameState* gs)
 		: Logic(SGE::LogicPriority::Highest), world(world), gs(gs)
 	{
-		std::default_random_engine dre{ std::random_device{}() };
-		randAngle = [dre](std::uniform_real_distribution<float>& dist)->float
+		this->dre = std::default_random_engine{ std::random_device{}() };
+		randAngle = [this](SpreadDistribution dist)->float
 		{
-			return 0.f;
+			return dist(this->dre);
 		};
 	}
 

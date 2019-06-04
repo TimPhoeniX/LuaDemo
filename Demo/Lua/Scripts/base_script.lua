@@ -69,3 +69,36 @@ function ForAllBots(fun, val)
         fun(bot, val)
     end
 end
+
+function ResetRailgun()
+    Bot.RailgunReload = 10
+    Bot.RailgunDamage = 100
+    Bot.RailgunSpread = 0.05
+    Bot.RailgunRate = 1.5
+    Bot.RailgunDefaultAmmo = 5
+
+    RailgunAmmo.Value = 5
+end
+
+function ResetLauncher()
+    Bot.LauncherReload = 5
+    Bot.LauncherDamage = 165
+    Bot.LauncherSpread = 0.05
+    Bot.LauncherRate = 1
+    Bot.LauncherDefaultAmmo = 15
+    Bot.RocketSpeed = 5
+
+    LauncherAmmo.Value = 15
+end
+
+function ResetBot()
+    Bot.DefaultHealth = 100 
+    Bot.DefaultArmor = 250
+    Bot.MaxSpeed = 3
+    Bot.MaxForce = 15
+    Bot.SwapSpeed = 3
+
+    Item.RespawnTime = 15
+    HealthPack.Value = 50
+    ArmorPack.Value = 50
+end

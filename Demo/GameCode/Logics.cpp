@@ -625,7 +625,11 @@ void BotLogic::updateBot(DemoBot& bot)
 		if(!bot.IsFollowingPath())
 		{
 			GridVertex* begin = gs->GetVertex(bot.getPosition());
-			GridVertex* end = gs->GetRandomVertex(bot.getPosition(),25.f,true);
+			if(begin == nullptr)
+			{
+				begin = gs->GetRandomVertex(bot.getPosition(), bot.getShape()->getRadius()*3, true);
+			}
+			GridVertex* end = gs->GetRandomVertex(bot.getPosition(),25.f,false);
 			bot.getSteering()->NewPath(std::move(this->gs->GetPath(begin, end)));
 		}
 		break;
