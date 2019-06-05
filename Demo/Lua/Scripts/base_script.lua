@@ -45,6 +45,14 @@ function PrintBotProperties(bot)
 
 end
 
+function PrintItemParams()
+    print(string.format("-Item respawn time  : %f", Items.RespawnTime))
+    print(string.format("-Health Pack Value  : %f", HealthPack.Value))
+    print(string.format("-Armor Pack Value   : %f", ArmorPack.Value))
+    print(string.format("-Railgun Ammo Value : %u", RailgunAmmo.Value))
+    print(string.format("-Launcher Ammo Value: %u", LauncherAmmo.Value))
+end
+
 function TableInvert(t)
     local inverted = {}
     for key, value in pairs(t) do
