@@ -36,7 +36,7 @@ function PrintBotProperties(bot)
     print(string.format("-Currently %s", BotStateName[bot.State]))
     print(string.format("-Current Weapon: %s", WeaponName[bot.CurrentWeapon]))
     print(string.format("-Ammo RG, RL: %u/%u, %u/%u", bot.RGLoadedAmmo, bot.RGSpareAmmo, bot.RLLoadedAmmo, bot.RLSpareAmmo))
-    if bot.IsSwappingWeapon then print("Bot is swapping weapon.") end
+    if bot.IsSwappingWeapon then print("-Bot is swapping weapon.") end
     if bot.IsSwappingWeapon then
         print("-Bot is reloading weapon.")
         print("-Remaining RG Reload Time: %f s", bot.RGReloadTime)
@@ -72,9 +72,9 @@ function PrintAllBots()
     end
 end
 
-function ForAllBots(fun, val)
+function ForAllBots(fun, ...)
     for index, bot in ipairs(Bots) do
-        fun(bot, val)
+        fun(bot, unpack(arg))
     end
 end
 
